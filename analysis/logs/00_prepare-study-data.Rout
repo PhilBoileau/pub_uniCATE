@@ -1,0 +1,131 @@
+
+R version 4.0.0 (2020-04-24) -- "Arbor Day"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # 00. Prepare the data
+> ################################################################################
+> 
+> # In this script, the IMmotion150 anf IMmotion151 studies data' are prepared for
+> # downstream analyses.
+> 
+> # laod the required libraries
+> library(here)
+here() starts at /gstore/home/boileap2/biomarker-discovery-real-data
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(tidyr)
+> library(matrixStats)
+
+Attaching package: ‘matrixStats’
+
+The following object is masked from ‘package:dplyr’:
+
+    count
+
+> 
+> # load the CIT data
+> cit_tbl <- readRDS(here("data/cit_processed.rds"))
+> 
+> # IMmotion150 Preparation ######################################################
+> 
+> # extract the IMmotion150 data
+> imm150_tbl <- cit_tbl %>% filter(STUDYID == "WO29074")
+> 
+> # extract the RNA-seq data
+> start_rnaseq_vars <- which(colnames(imm150_tbl) == "AVALU_PFS") + 1
+> imm150_rnaseq_tbl <- imm150_tbl %>%
++   select(start_rnaseq_vars:(length(imm150_tbl) - 2))
+Note: Using an external vector in selections is ambiguous.
+ℹ Use `all_of(start_rnaseq_vars)` instead of `start_rnaseq_vars` to silence this message.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+This message is displayed once per session.
+> 
+> # extract non-biomarker covariates
+> imm150_tbl <- imm150_tbl %>%
++   select(USUBJID, AGE, SEX, RACE, ETHNIC, ARMCD, ARM, COUNTRY)
+> 
+> # recombine the imm150 study data
+> imm150_tbl <- bind_cols(imm150_tbl, imm150_rnaseq_tbl)
+> 
+> # remove all rows with missing data
+> imm150_tbl <- imm150_tbl %>% drop_na() 
+> 
+> # only consider the "MPDL3280A AND BEVACIZUMAB" and "SUNITINIB" arms
+> imm150_tbl <- imm150_tbl %>% filter(ARM != "MPDL3280A ALONE")
+> 
+> # extract a small random sample: use it to identify the most informative genes
+> set.seed(723423)
+> imm150_var_subset <- imm150_tbl %>% sample_n(20)
+> imm150_gene_vars <- imm150_var_subset %>%
++   select(-c(USUBJID, AGE, SEX, RACE, ETHNIC, ARMCD, ARM, COUNTRY)) %>%
++   log1p %>%
++   as.matrix %>%
++   colVars
+> names(imm150_gene_vars) <- colnames(imm150_rnaseq_tbl)
+> imm150_inf_genes <- names(which(rank(-imm150_gene_vars) <= 500))
+> 
+> # subset and save the remaining data for analysis
+> imm150_tbl <- imm150_tbl %>%
++   filter(!(USUBJID %in% imm150_var_subset$USUBJID)) %>%
++   select(
++     USUBJID, AGE, SEX, RACE, ETHNIC, ARMCD, ARM, COUNTRY,
++     all_of(imm150_inf_genes)
++   )
+> saveRDS(
++   imm150_tbl,
++   file = "data/processed-IMmotion150.Rds"
++ )
+> 
+> 
+> # IMmotion151 Preparation ######################################################
+> 
+> # extract the IMmotion151 data
+> imm151_tbl <- cit_tbl %>% filter(STUDYID == "WO29637")
+> 
+> # extract the RNA-seq data
+> imm151_rnaseq_tbl <- imm151_tbl %>%
++   select(all_of(imm150_inf_genes)) %>%
++   log1p
+> 
+> # extract non-biomarker covariates
+> imm151_tbl <- imm151_tbl %>%
++   select(USUBJID, AGE, SEX, RACE, ETHNIC, ARMCD, ARM, COUNTRY)
+> 
+> # recombine the imm150 study data, and remove missing data 
+> imm151_tbl <- bind_cols(imm151_tbl, imm151_rnaseq_tbl) %>% drop_na()
+> 
+> # save the data for further analysis
+> saveRDS(
++   imm151_tbl,
++   file = "data/processed-IMmotion151.Rds"
++ )
+> 
+> proc.time()
+   user  system elapsed 
+ 38.646   6.542  45.912 
