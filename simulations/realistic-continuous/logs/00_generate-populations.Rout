@@ -1,0 +1,164 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # 00. Generate Population Datasets
+> ################################################################################
+> 
+> # load the required libraries and functions
+> library(here)
+here() starts at /gstore/home/boileap2/HD-biomarker-discovery/simulations
+> library(future.apply)
+Loading required package: future
+> library(Biobase)
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+> library(curatedCRCData)
+Loading required package: nlme
+> library(matrixStats)
+
+Attaching package: ‘matrixStats’
+
+The following objects are masked from ‘package:Biobase’:
+
+    anyMissing, rowMedians
+
+> library(cvCovEst)
+cvCovEst v1.0.1: Cross-Validated Covariance Matrix Estimation
+> library(Matrix)
+> source(here("realistic-continuous", "R", "data-generating-processes.R"))
+
+Attaching package: ‘dplyr’
+
+The following object is masked from ‘package:MASS’:
+
+    select
+
+The following object is masked from ‘package:matrixStats’:
+
+    count
+
+The following object is masked from ‘package:nlme’:
+
+    collapse
+
+The following object is masked from ‘package:Biobase’:
+
+    combine
+
+The following objects are masked from ‘package:BiocGenerics’:
+
+    combine, intersect, setdiff, union
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> source(here("realistic-continuous", "R", "generate-populations.R"))
+> 
+> # set the future plan
+> plan(multisession, workers = 20)
+> 
+> # set the seed
+> set.seed(7134513)
+> 
+> # generate the covariance matrix
+> # load the data, and extract the expression data of the 500 most variable genes
+> data("GSE14095_eset")
+> expr <- exprs(GSE14095_eset)
+> mvr_genes <- expr[which(rank(-rowVars(expr)) <= 500), ]
+> mvr_genes <- as.data.frame(t(mvr_genes))
+> 
+> # cluster them using hierarchical clustering with complete linkage
+> gene_clusters <- hclust(dist(t(mvr_genes)))
+> mvr_genes <- mvr_genes[, gene_clusters$order]
+> 
+> # extract small correlated gene set identified through visual inspection
+> # and reorder most variable gene expression list
+> gene_set <- c(
++   "IGF2///INS-IGF2", "MAGEA2B///MAGEA2", "MAGEA12", "MAGEA6///MAGEA3"
++ )
+> gene_set_expr <- mvr_genes[, gene_set]
+> mvr_genes <- mvr_genes[, !(colnames(mvr_genes) %in% gene_set)]
+> mvr_genes <- bind_cols(gene_set_expr, mvr_genes)
+> 
+> # estimate the correlation matrix
+> cv_cov_est_out <- cvCovEst(
++   dat = mvr_genes,
++   center = TRUE, scale = TRUE,
++   estimators = c(
++     bandingEst, taperingEst
++   ),
++   estimator_params = list(
++     bandingEst = list(k = as.integer(seq_len(10))),
++     taperingEst = list(k = as.integer(2*seq_len(10)))
++   ),
++   cv_loss = cvMatrixFrobeniusLoss,
++   cv_scheme = "v_fold",
++   v_folds = 5,
++   parallel = TRUE
++ )
+> cor_mat <- cv_cov_est_out$estimate
+> 
+> # make the corre4lation matrix positive definition using the linear
+> # shrinkage covariance matrix estimator technique
+> cor_mat <- Matrix::nearPD(
++   cor_mat, corr = TRUE, base.matrix = TRUE, ensureSymmetry = TRUE
++ )$mat
+> colnames(cor_mat) <- colnames(mvr_genes)
+> rownames(cor_mat) <- colnames(mvr_genes)
+> 
+> # generate the populations
+> generate_populations(n = 100000, cov_mat = cor_mat)
+> 
+> proc.time()
+    user   system  elapsed 
+ 323.852   29.376 4447.189 

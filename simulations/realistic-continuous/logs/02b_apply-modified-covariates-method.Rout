@@ -1,0 +1,108 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # 02b. Apply Modified Covariate Model Method to Sample Data
+> ################################################################################
+> 
+> # load the required libraries and functions
+> library(here)
+here() starts at /gstore/home/boileap2/HD-biomarker-discovery/simulations
+> library(readr)
+> library(purrr)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(tibble)
+> library(tidyr)
+> library(furrr)
+Loading required package: future
+> source(here("shared-r", "apply-modified-covariates.R"))
+Loading required package: glmnet
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following objects are masked from ‘package:tidyr’:
+
+    expand, pack, unpack
+
+Loaded glmnet 4.1-2
+Loading required package: mgcv
+Loading required package: nlme
+
+Attaching package: ‘nlme’
+
+The following object is masked from ‘package:dplyr’:
+
+    collapse
+
+This is mgcv 1.8-36. For overview type 'help("mgcv-package")'.
+Loading required package: gbm
+Loaded gbm 2.1.8
+Loading required package: ggplot2
+Loading required package: plotly
+
+Attaching package: ‘plotly’
+
+The following object is masked from ‘package:ggplot2’:
+
+    last_plot
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+The following object is masked from ‘package:graphics’:
+
+    layout
+
+> 
+> # set the seed
+> set.seed(71234)
+> 
+> # set up the future plan
+> plan(multisession, workers = 10)
+> 
+> # read in the samples data
+> sample_tbls <- read_rds(
++   here("realistic-continuous", "data", "sample-data", "sample-tbls.Rds")
++ )
+> 
+> # apply the method to the data
+> results_tbl <- apply_mod_cov(sample_tbls, p = 500)
+> 
+> # and save to the results folder
+> saveRDS(
++   results_tbl,
++   file = here("realistic-continuous", "results", "mod-cov-method.Rds")
++ )
+> 
+> proc.time()
+    user   system  elapsed 
+ 272.562   91.030 3608.263 

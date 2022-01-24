@@ -1,0 +1,52 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # 01b. Compute Linear Approximations of Univariate CATEs in Population Data
+> ################################################################################
+> 
+> # load the required libraries and functions
+> library(here)
+here() starts at /gstore/home/boileap2/HD-biomarker-discovery/simulations
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.5     ✔ dplyr   1.0.7
+✔ tidyr   1.1.3     ✔ stringr 1.4.0
+✔ readr   2.0.1     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> source(here("shared-r", "compute-pop-univariate-cates.R"))
+> 
+> # compute the projected linear models' interaction coefficients
+> pop_cates_tbls <- compute_pop_cates(scenario_dir = "realistic-continuous")
+> 
+> # save the coefficients
+> saveRDS(
++   pop_cates_tbls,
++   file = here(
++     "realistic-continuous", "data", "population-data",
++     "pop-univariate-cate-params.Rds"
++   )
++ )
+> 
+> proc.time()
+   user  system elapsed 
+ 16.828   4.352  22.224 

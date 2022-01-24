@@ -1,0 +1,17 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*/slurm.out
+simple-continuous/results/p100_unicate-results.Rds
+simple-continuous/results/p500_unicate-results.Rds
+simple-continuous/results/p100_mod-cov-method.Rds
+simple-continuous/results/p500_mod-cov-method.Rds
+simple-continuous/results/p100_aug-mod-cov-method.Rds
+simple-continuous/results/p500_aug-mod-cov-method.Rds
+realistic-continuous/results/p100_unicate-results.Rds
+realistic-continuous/results/p500_unicate-results.Rds
+realistic-continuous/results/p100_mod-cov-method.Rds
+realistic-continuous/results/p500_mod-cov-method.Rds
+realistic-continuous/results/p100_aug-mod-cov-method.Rds
+realistic-continuous/results/p500_aug-mod-cov-method.Rds

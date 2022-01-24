@@ -1,0 +1,58 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # 00. Generate Population Datasets
+> ################################################################################
+> 
+> # load the required libraries and functions
+> library(here)
+here() starts at /gstore/home/boileap2/HD-biomarker-discovery/simulations
+> library(future.apply)
+Loading required package: future
+> source(here("simple-continuous", "R", "data-generating-processes.R"))
+
+Attaching package: ‘dplyr’
+
+The following object is masked from ‘package:MASS’:
+
+    select
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> source(here("simple-continuous", "R", "generate-populations.R"))
+> 
+> # set the future plan
+> plan(multicore, workers = 20)
+> 
+> # set the seed
+> set.seed(5123234)
+> 
+> # generate the populations
+> generate_populations(n = 100000)
+> 
+> proc.time()
+     user    system   elapsed 
+86962.412   477.091  4546.526 
